@@ -32,7 +32,7 @@ long PvObject::init(bool monitor)
     }
 
     int status = 0; 
-    status = connect(_name.toAscii());
+    status = connect(_name.toLatin1());
     if (status != 0)
         return status; 
 
