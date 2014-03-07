@@ -15,8 +15,8 @@ unix:!macx{
 
 
 win32{
-    INCLUDEPATH += $$(EPICS_BASE)/include  $$((EPICS_BASE)/include/os/WIN32
-    LIBS += -L$$((EPICS_BASE)/lib/$$(EPICS_HOST_ARCH) -lca -lCom -lws2_32
+    INCLUDEPATH += $$(EPICS_BASE)/include  $$(EPICS_BASE)/include/os/WIN32
+    LIBS += -L$$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH) -lca -lCom -lws2_32
 }
 
 # Input
