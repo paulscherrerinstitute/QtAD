@@ -15,12 +15,17 @@ $ make
 Options
 -------
 ```
---prefix=<areaDetector NDArray>
---rate=<refresh rate>
---simple
---dg=widthxheight+xpos+ypos
---fullscreen
+   --prefix=<areaDetector NDArray>: channel prefix of NDStdArray
+   --rate=<frame rate>: refresh with fixed frame rate or monitor for updates (<=0)
+   --simple: show only the viewer window
+   --fullscreen: fullscreen mode
+   --dg=<[width][xheight][xoffset][yoffset]>: window geometry
 ```
+* show viewer only 
+
+  ```
+  $ QtAD --prefix=13PS1:image1: --simple
+  ```
 
 Limitations
 -----------
