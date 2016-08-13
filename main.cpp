@@ -1,7 +1,7 @@
 #include <QApplication>
-#include <QtGui/QImage>
-#include <QtGui/QDesktopWidget>
-#include <QtGui/QStyle>
+#include <QImage>
+#include <QDesktopWidget>
+#include <QStyle>
 
 #include <QtDebug>
 
