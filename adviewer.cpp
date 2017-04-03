@@ -6,6 +6,13 @@
 #include <QtOpenGL>
 #include <QWheelEvent>
 
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <unistd.h>
+#define Sleep(x) usleep((x)*1000)
+#endif
+
 #include "adviewer.h"
 
 ADViewer :: ADViewer(QWidget *parent)
@@ -126,7 +133,7 @@ void ADViewer :: updateImage()
         if (_imginfo.size != pvData.arraySize()) {
             qDebug() << "update image monitor size " << pvData.arraySize() << "->" <<  _imginfo.size;
             setMonitor(false);
-            sleep(0.5);
+            Sleep(500);
             setMonitor(true);
             return;
         }
