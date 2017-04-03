@@ -3,15 +3,16 @@ QT += core gui opengl
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 MOC_DIR = .moc
 OBJECTS_DIR = .obj
+VERSION = 1.0.0
 
 macx{
     INCLUDEPATH += $$(EPICS_BASE)/include  $$(EPICS_BASE)/include/os/Darwin
-    LIBS += -L$$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH) -lca -lCom
+    LIBS += $$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH)/libca.a $$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH)/libCom.a
 }
 
 unix:!macx{
     INCLUDEPATH += $$(EPICS_BASE)/include  $$(EPICS_BASE)/include/os/Linux
-    LIBS += -L$$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH) -Wl,-R$$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH) -lca -lCom
+    LIBS += -lreadline $$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH)/libca.a $$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH)/libCom.a
 }
 
 
@@ -29,3 +30,12 @@ SOURCES += pvobject.cpp \
             adviewer.cpp \
             main.cpp \
             window.cpp
+
+# Install
+isEmpty(PREFIX) {
+    unix {
+        PREFIX=/usr/local/bin
+    }
+}
+target.path = $$PREFIX
+INSTALLS += target
