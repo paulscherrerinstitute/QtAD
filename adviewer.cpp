@@ -303,7 +303,7 @@ void ADViewer :: mouseMoveEvent(QMouseEvent* me)
     updateGL();
 }
 
-void ADViewer :: mouseReleaseEvent(QMouseEvent* me)
+void ADViewer :: mouseReleaseEvent(QMouseEvent*)
 {
     setCursor(Qt::ArrowCursor);
     _ptLast = QPoint();

@@ -9,7 +9,7 @@ typedef struct {
     int height; 
     GLenum type; 
     GLenum format; 
-    int size;
+    unsigned int size;
 } ImgInfo; 
 
 class ADViewer : public QGLWidget
