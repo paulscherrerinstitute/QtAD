@@ -235,18 +235,10 @@ void ADViewer :: keyReleaseEvent(QKeyEvent *ke)
         break;
     case Qt::Key_Plus:
     case Qt::Key_Equal:
-    {
-        QPointF pt = _rect.center();
-        _rect.setSize(QSizeF(_rect.width()*0.9, _rect.height()*0.9));
-        _rect.translate(pt-_rect.center());
-    }
+        zoom(0.9);
         break;
     case Qt::Key_Minus:
-    {
-        QPointF pt = _rect.center();
-        _rect.setSize(QSizeF(_rect.width()*1.1, _rect.height()*1.1));
-        _rect.translate(pt-_rect.center());
-    }
+        zoom(1.1);
         break;
     case Qt::Key_Z:
         _rect.setRect(0, 0, 1.0, 1.0);
@@ -254,17 +246,33 @@ void ADViewer :: keyReleaseEvent(QKeyEvent *ke)
     updateGL();
 }
 
+void  ADViewer :: zoom(double factor, const QPointF point)
+{
+    QPointF pointOrigin = point;
+    if (pointOrigin.isNull()) {
+        pointOrigin = _rect.center();
+    }
+
+    QPointF pointResized = (pointOrigin - _rect.topLeft()) * factor + _rect.topLeft();
+
+    _rect.setSize(_rect.size() * factor);
+    _rect.translate(pointOrigin - pointResized);
+}
+
+QPointF ADViewer :: mapToGL(const QPointF point) const
+{
+    qreal xp = _rect.left() + 1.0 * (point.x() - _rectView.x()) / _rectView.width() * _rect.width();
+    qreal yp = _rect.top()  + 1.0 * (point.y() - _rectView.y()) / _rectView.height()* _rect.height();
+    return QPointF(xp, yp);
+}
+
 void ADViewer :: wheelEvent(QWheelEvent *we)
 {
-    if (we->delta()>0) {
-        QPointF pt = _rect.center();
-        _rect.setSize(QSizeF(_rect.width()*0.9, _rect.height()*0.9));
-        _rect.translate(pt-_rect.center());
-    } else {
-        QPointF pt = _rect.center();
-        _rect.setSize(QSizeF(_rect.width()*1.1, _rect.height()*1.1));
-        _rect.translate(pt-_rect.center());
-    }
+    if (we->delta() > 0)
+        zoom(0.9, mapToGL(we->pos()));
+    else
+        zoom(1.1, mapToGL(we->pos()));
+
     updateGL();
     we->accept();
 }
@@ -284,12 +292,13 @@ void ADViewer :: mouseMoveEvent(QMouseEvent* me)
 {
     if (!_ptLast.isNull())
     {
-        QPointF delta = _ptLast -  me->pos();
-        _rect.translate(delta.x()/width(),delta.y()/height());
+        QPointF delta = mapToGL(_ptLast) -  mapToGL(me->pos());
+        _rect.translate(delta);
         _ptLast = me->pos();
     } else {
-        _xp =  _imginfo.width * (_rect.left() / _rect.width()  +  1.0 * (me->pos().x() - _rectView.x()) / _rectView.width()) * _rect.width();
-        _yp =  _imginfo.height* (_rect.top()  / _rect.height() +  1.0 * (me->pos().y() - _rectView.y()) / _rectView.height())* _rect.height();
+        QPointF pt = mapToGL(me->pos());
+        _xp =  _imginfo.width * pt.x();
+        _yp =  _imginfo.height * pt.y();
     }
     updateGL();
 }

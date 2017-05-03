@@ -52,6 +52,9 @@ protected:
     void mouseMoveEvent(QMouseEvent *);
     void timerEvent(QTimerEvent *);
 
+    void zoom(double factor, const QPointF=QPointF());
+    QPointF mapToGL(const QPointF) const;
+
     ImgInfo getImageInfo();
 
 private:
