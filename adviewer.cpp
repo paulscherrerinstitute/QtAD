@@ -150,6 +150,20 @@ void ADViewer :: updateImage()
     }
 
     // bind image texture
+    switch (_imginfo.width % 8) {
+        case 0:
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 8);
+            break;
+        case 4:
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+            break;
+        case 2:
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 2);
+            break;
+        default:
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+            break;
+    }
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _imginfo.width, _imginfo.height,
                  0, _imginfo.format, _imginfo.type, pvData.arrayData());
     updateGL();
