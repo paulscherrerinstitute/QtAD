@@ -73,31 +73,31 @@ ImgInfo ADViewer :: getImageInfo()
     switch (pvData.dataType()) {
         case DBF_CHAR:
             type = GL_UNSIGNED_BYTE;
-            break; 
+            break;
         case DBF_SHORT:
-            type = GL_UNSIGNED_SHORT; 
-            break; 
+            type = GL_UNSIGNED_SHORT;
+            break;
         default:
-            qDebug() << "Unsupported data type!"; 
+            qDebug() << "Unsupported data type!";
             break;
     }
     if (pvDims.value() == 2) {
         depth = 1;
-        width = pvSize0.value().toInt(); 
-        height= pvSize1.value().toInt(); 
+        width = pvSize0.value().toInt();
+        height= pvSize1.value().toInt();
         format= GL_LUMINANCE;
     } else {
         depth = 3;
-        width = pvSize1.value().toInt(); 
-        height= pvSize2.value().toInt(); 
+        width = pvSize1.value().toInt();
+        height= pvSize2.value().toInt();
         format= GL_RGB;
     }
     // store image info
     ImgInfo imginfo;
-    imginfo.width  = width; 
-    imginfo.height = height; 
-    imginfo.type   = type; 
-    imginfo.format = format; 
+    imginfo.width  = width;
+    imginfo.height = height;
+    imginfo.type   = type;
+    imginfo.format = format;
     imginfo.size   = width * height * depth;
 
     return imginfo;
@@ -118,7 +118,7 @@ void ADViewer :: updateImage()
     static QTime prev = QTime::currentTime();
     static int frame_counter = 0;
 
-    int uid = pvUniqueId.value().toInt(); 
+    int uid = pvUniqueId.value().toInt();
     if (uid == prev_uid)
         return;
     prev_uid = uid;
@@ -191,7 +191,7 @@ void ADViewer :: initializeGL()
 }
 
 void ADViewer :: resizeGL(int w, int h)
-{ 
+{
     // adjust view port size so that it keeps the image aspect ratio
     int x=0, y=0, width=w, height=h;
     _imginfo = getImageInfo();
