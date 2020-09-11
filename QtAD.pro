@@ -6,18 +6,18 @@ OBJECTS_DIR = .obj
 VERSION = 1.0.0
 
 macx{
-    INCLUDEPATH += $$(EPICS_BASE)/include  $$(EPICS_BASE)/include/os/Darwin
+    INCLUDEPATH += $$(EPICS_BASE)/include  $$(EPICS_BASE)/include/os/Darwin $$(EPICS_BASE)/include/compiler/clang
     LIBS += $$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH)/libca.a $$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH)/libCom.a
 }
 
 unix:!macx{
-    INCLUDEPATH += $$(EPICS_BASE)/include  $$(EPICS_BASE)/include/os/Linux
+    INCLUDEPATH += $$(EPICS_BASE)/include  $$(EPICS_BASE)/include/os/Linux $$(EPICS_BASE)/include/compiler/gcc
     LIBS += $$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH)/libca.a $$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH)/libCom.a -lreadline -ldl -lrt
 }
 
 
 win32{
-    INCLUDEPATH += $$(EPICS_BASE)/include  $$(EPICS_BASE)/include/os/WIN32
+    INCLUDEPATH += $$(EPICS_BASE)/include  $$(EPICS_BASE)/include/os/WIN32 $$(EPICS_BASE)/include/compiler/msvc
     LIBS += -L$$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH) -lca -lCom -lws2_32
 }
 
