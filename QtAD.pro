@@ -18,7 +18,7 @@ unix:!macx{
 
 win32{
     INCLUDEPATH += $$(EPICS_BASE)/include  $$(EPICS_BASE)/include/os/WIN32 $$(EPICS_BASE)/include/compiler/msvc
-    LIBS += -L$$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH) -lca -lCom -lws2_32
+    LIBS += -L$$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH) -lca -lCom -lws2_32 -lopengl32
 }
 
 # Input
