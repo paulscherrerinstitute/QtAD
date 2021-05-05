@@ -30,5 +30,9 @@ Options
 Limitations
 -----------
 * data type can only be Int8 or Int16
-* color type can only be RGB or mono
+* color type can be mono, bayer or RGB1
 * image width and height must be even number. odd width or height produces slanted image.
+
+Acknowlegement
+--------------
+* bayer.h/c sources from https://github.com/jdthomas/bayer2rgb

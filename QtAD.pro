@@ -5,6 +5,8 @@ MOC_DIR = .moc
 OBJECTS_DIR = .obj
 VERSION = 1.0.0
 
+QMAKE_CFLAGS += -std=c99
+
 macx{
     INCLUDEPATH += $$(EPICS_BASE)/include  $$(EPICS_BASE)/include/os/Darwin $$(EPICS_BASE)/include/compiler/clang
     LIBS += $$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH)/libca.a $$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH)/libCom.a
@@ -24,11 +26,13 @@ win32{
 # Input
 HEADERS += pvobject.h \
             adviewer.h \
+            bayer.h \
             window.h
 
 SOURCES += pvobject.cpp \
             adviewer.cpp \
             main.cpp \
+            bayer.c \
             window.cpp
 
 # Install

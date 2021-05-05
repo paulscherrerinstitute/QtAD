@@ -7,6 +7,8 @@
 typedef struct {
     int width; 
     int height; 
+    int color;
+    int bayer;
     GLenum type; 
     GLenum format; 
     unsigned int size;
@@ -67,6 +69,7 @@ private:
     PvObject pvSize1;
     PvObject pvSize2; 
     PvObject pvColor; 
+    PvObject pvBayer;
     PvObject pvUniqueId; 
 
     int _imagerate;

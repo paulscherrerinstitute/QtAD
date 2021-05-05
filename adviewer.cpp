@@ -13,6 +13,9 @@
 #define Sleep(x) usleep((x)*1000)
 #endif
 
+extern "C" {
+#include "bayer.h"
+}
 #include "adviewer.h"
 
 ADViewer :: ADViewer(QWidget *parent)
@@ -47,6 +50,7 @@ void ADViewer :: connectChannels()
     pvSize1.setChannel(_prefix + "ArraySize1_RBV"); pvSize1.init();
     pvSize2.setChannel(_prefix + "ArraySize2_RBV"); pvSize2.init();
     pvColor.setChannel(_prefix + "ColorMode_RBV");  pvColor.init();
+    pvBayer.setChannel(_prefix + "BayerPattern_RBV");  pvBayer.init();
     pvUniqueId.setChannel(_prefix + "UniqueId_RBV");  pvUniqueId.init();
     if (pvData.ensureConnection() != ECA_NORMAL)
         qCritical("EPICS channels are not connected");
@@ -69,7 +73,7 @@ ImgInfo ADViewer :: getImageInfo()
 {
     // get image info
     int width=0, height=0, depth=0;
-    GLenum type,  format;
+    GLenum type = GL_UNSIGNED_BYTE,  format=GL_LUMINANCE;
     switch (pvData.dataType()) {
         case DBF_CHAR:
             type = GL_UNSIGNED_BYTE;
@@ -99,6 +103,8 @@ ImgInfo ADViewer :: getImageInfo()
     imginfo.type   = type;
     imginfo.format = format;
     imginfo.size   = width * height * depth;
+    imginfo.color  = pvColor.value().toInt();
+    imginfo.bayer  = pvBayer.value().toInt();
 
     return imginfo;
 }
@@ -149,6 +155,34 @@ void ADViewer :: updateImage()
         frame_counter = 0;
     }
 
+    void *img = NULL;
+    // decode bayer image
+    if (_imginfo.color == 1) {
+        if (_imginfo.type == GL_UNSIGNED_BYTE) {
+            img = malloc(_imginfo.width * _imginfo.height * 3);
+            dc1394error_t err = dc1394_bayer_decoding_8bit((uint8_t*)pvData.arrayData(), (uint8_t*)img,
+                    _imginfo.width, _imginfo.height, (dc1394color_filter_t)(_imginfo.bayer + DC1394_COLOR_FILTER_MIN),
+                    DC1394_BAYER_METHOD_NEAREST);
+            if (err == DC1394_SUCCESS)
+                _imginfo.format = GL_RGB;
+            else {
+                free(img);
+                img = NULL;
+            }
+        } else if (_imginfo.type == GL_UNSIGNED_SHORT) {
+            img = malloc(_imginfo.width * _imginfo.height * sizeof(uint16_t) * 3);
+            dc1394error_t err = dc1394_bayer_decoding_16bit((uint16_t*)pvData.arrayData(), (uint16_t*)img,
+                    _imginfo.width, _imginfo.height, (dc1394color_filter_t)(_imginfo.bayer + DC1394_COLOR_FILTER_MIN),
+                    DC1394_BAYER_METHOD_NEAREST, 12);
+            if (err == DC1394_SUCCESS)
+                _imginfo.format = GL_RGB;
+            else {
+                free(img);
+                img = NULL;
+            }
+        }
+    }
+
     // bind image texture
     switch (_imginfo.width % 8) {
         case 0:
@@ -165,8 +199,12 @@ void ADViewer :: updateImage()
             break;
     }
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _imginfo.width, _imginfo.height,
-                 0, _imginfo.format, _imginfo.type, pvData.arrayData());
+                 0, _imginfo.format, _imginfo.type, img ? img : pvData.arrayData());
     updateGL();
+
+    // free decoded bayer image
+    if (img)
+        free(img);
 }
 
 
