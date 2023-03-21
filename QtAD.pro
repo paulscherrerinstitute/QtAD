@@ -3,7 +3,7 @@ QT += core gui opengl
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 MOC_DIR = .moc
 OBJECTS_DIR = .obj
-VERSION = 1.0.0
+VERSION = 1.3.0
 
 QMAKE_CFLAGS += -std=c99
 
