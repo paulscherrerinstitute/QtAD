@@ -18,7 +18,7 @@ MainWindow::MainWindow(QWidget *parent) :
     editPrefix = new QLineEdit();
     connect(editPrefix, SIGNAL(editingFinished()), this, SLOT(changePrefix()));
     hLayout->addWidget(label);
-    hLayout->addWidget(editPrefix);
+    hLayout->addWidget(editPrefix, 2);
 
     label = new QLabel("Frame Rate:");
     QSpinBox *spin = new QSpinBox();
