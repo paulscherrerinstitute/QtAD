@@ -59,6 +59,7 @@ void MainWindow :: changePrefix()
     if (editPrefix->text() != viewer->prefix()) {
         viewer->setPrefix(editPrefix->text());
         viewer->connectChannels();
+        setWindowTitle(QString("%1 - QtAD").arg(viewer->prefix()));
     }
 }
 

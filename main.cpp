@@ -119,6 +119,7 @@ int main(int argc,  char **argv)
         ADViewer *viewer = new ADViewer();
         viewer->setPrefix(prefix);
         viewer->connectChannels();
+        viewer->setWindowTitle(QString("%1 - QtAD").arg(prefix));
         if (image_rate <= 0)
             viewer->setMonitor(true);
         else
@@ -131,6 +132,7 @@ int main(int argc,  char **argv)
             viewer->showNormal();
     } else {
         MainWindow *win = new MainWindow();
+        win->setWindowTitle("QtAD");
         win->setGeometry(geometry);
         if (fullscreen) 
             win->showFullScreen();
