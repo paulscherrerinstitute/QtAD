@@ -7,20 +7,31 @@ VERSION = 1.3.0
 
 QMAKE_CFLAGS += -std=c99
 
+INCLUDEPATH += $$(EPICS_BASE)/include
+LIBS += -L$$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH)
+
 macx{
-    INCLUDEPATH += $$(EPICS_BASE)/include  $$(EPICS_BASE)/include/os/Darwin $$(EPICS_BASE)/include/compiler/clang
-    LIBS += $$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH)/libca.a $$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH)/libCom.a
+    INCLUDEPATH += $$(EPICS_BASE)/include/os/Darwin $$(EPICS_BASE)/include/compiler/clang
+    exists($$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH)/libca.a) {
+        LIBS += $$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH)/libca.a $$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH)/libCom.a
+    } else {
+        LIBS += -Wl,-rpath,$$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH) -lca -lCom
+    }
 }
 
 unix:!macx{
-    INCLUDEPATH += $$(EPICS_BASE)/include  $$(EPICS_BASE)/include/os/Linux $$(EPICS_BASE)/include/compiler/gcc
-    LIBS += $$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH)/libca.a $$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH)/libCom.a -lreadline -ldl -lrt
+    INCLUDEPATH += $$(EPICS_BASE)/include/os/Linux $$(EPICS_BASE)/include/compiler/gcc
+    exists($$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH)/libca.a) {
+        LIBS += $$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH)/libca.a $$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH)/libCom.a -lreadline -ldl -lrt
+    } else {
+        LIBS += -Wl,-rpath,$$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH) -lca -lCom
+    }
 }
 
 
 win32{
-    INCLUDEPATH += $$(EPICS_BASE)/include  $$(EPICS_BASE)/include/os/WIN32 $$(EPICS_BASE)/include/compiler/msvc
-    LIBS += -L$$(EPICS_BASE)/lib/$$(EPICS_HOST_ARCH) -lca -lCom -lws2_32 -lopengl32
+    INCLUDEPATH += $$(EPICS_BASE)/include/os/WIN32 $$(EPICS_BASE)/include/compiler/msvc
+    LIBS += -lca -lCom -lws2_32 -lopengl32
 }
 
 # Input
