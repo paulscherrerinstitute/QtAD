@@ -30,8 +30,11 @@ MainWindow::MainWindow(QWidget *parent) :
     hLayout->addWidget(labelImageRate);
 
     QButtonGroup *buttonGroup = new QButtonGroup();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     connect(buttonGroup, SIGNAL(buttonClicked(int)), this, SLOT(updateImage(int)));
-    
+#else
+    connect(buttonGroup, SIGNAL(idClicked(int)), this, SLOT(updateImage(int)));
+#endif
     hLayout->addStretch(1);
 
     QRadioButton *radio = new QRadioButton("Monitor");
