@@ -1,8 +1,10 @@
 #ifndef ADVIEWER_H
 #define ADVIEWER_H
 
-#include <QGLWidget>
+#include <QOpenGLFunctions>
+#include <QOpenGLWidget>
 #include <pvobject.h>
+#include <QAtomicInteger>
 
 typedef struct {
     int width; 
@@ -12,9 +14,10 @@ typedef struct {
     GLenum type; 
     GLenum format; 
     unsigned int size;
+    QAtomicInteger<bool> updated;
 } ImgInfo; 
 
-class ADViewer : public QGLWidget
+class ADViewer : public QOpenGLWidget
 {
     Q_OBJECT
     Q_PROPERTY(QString prefix READ prefix WRITE setPrefix)
@@ -71,6 +74,7 @@ private:
     PvObject pvColor; 
     PvObject pvBayer;
     PvObject pvUniqueId; 
+    PvObject pvArrayRate;
 
     int _imagerate;
     int _imagecounter;
@@ -81,6 +85,7 @@ private:
     QRect _rectView;
     QPointF _ptLast;
     ImgInfo _imginfo;
+    std::vector<uint8_t> _img;
     int _xp;
     int _yp;
 }; 

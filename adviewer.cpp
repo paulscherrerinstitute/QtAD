@@ -3,7 +3,6 @@
 #include <QPainter>
 #include <QtDebug>
 #include <QThread>
-#include <QtOpenGL>
 #include <QWheelEvent>
 
 #ifdef _WIN32
@@ -19,9 +18,10 @@ extern "C" {
 #include "adviewer.h"
 
 ADViewer :: ADViewer(QWidget *parent)
-    : QGLWidget(parent)
+    : QOpenGLWidget(parent)
 {
     _rect = QRectF(0.0, 0.0, 1.0, 1.0);
+    _xp = _yp = 0;
     _period = 1000;
     _imagerate = 0;
     _timerUpdate = 0;
@@ -52,6 +52,7 @@ void ADViewer :: connectChannels()
     pvColor.setChannel(_prefix + "ColorMode_RBV");  pvColor.init();
     pvBayer.setChannel(_prefix + "BayerPattern_RBV");  pvBayer.init();
     pvUniqueId.setChannel(_prefix + "UniqueId_RBV");  pvUniqueId.init();
+    pvArrayRate.setChannel(_prefix + "ArrayRate_RBV");  pvArrayRate.init();
     if (pvData.ensureConnection() != ECA_NORMAL)
         qCritical("EPICS channels are not connected");
 }
@@ -155,56 +156,29 @@ void ADViewer :: updateImage()
         frame_counter = 0;
     }
 
-    void *img = NULL;
     // decode bayer image
     if (_imginfo.color == 1) {
         if (_imginfo.type == GL_UNSIGNED_BYTE) {
-            img = malloc(_imginfo.width * _imginfo.height * 3);
-            dc1394error_t err = dc1394_bayer_decoding_8bit((uint8_t*)pvData.arrayData(), (uint8_t*)img,
+            _img.resize(_imginfo.width * _imginfo.height * 3);
+            dc1394error_t err = dc1394_bayer_decoding_8bit((uint8_t*)pvData.arrayData(), (uint8_t*)_img.data(),
                     _imginfo.width, _imginfo.height, (dc1394color_filter_t)(_imginfo.bayer + DC1394_COLOR_FILTER_MIN),
                     DC1394_BAYER_METHOD_NEAREST);
             if (err == DC1394_SUCCESS)
                 _imginfo.format = GL_RGB;
-            else {
-                free(img);
-                img = NULL;
-            }
         } else if (_imginfo.type == GL_UNSIGNED_SHORT) {
-            img = malloc(_imginfo.width * _imginfo.height * sizeof(uint16_t) * 3);
-            dc1394error_t err = dc1394_bayer_decoding_16bit((uint16_t*)pvData.arrayData(), (uint16_t*)img,
+            _img.resize(_imginfo.width * _imginfo.height * sizeof(uint16_t) * 3);
+            dc1394error_t err = dc1394_bayer_decoding_16bit((uint16_t*)pvData.arrayData(), (uint16_t*)_img.data(),
                     _imginfo.width, _imginfo.height, (dc1394color_filter_t)(_imginfo.bayer + DC1394_COLOR_FILTER_MIN),
                     DC1394_BAYER_METHOD_NEAREST, 12);
             if (err == DC1394_SUCCESS)
                 _imginfo.format = GL_RGB;
-            else {
-                free(img);
-                img = NULL;
-            }
         }
+    } else {
+        _img.resize(pvData.arrayBytes());
+        memcpy(_img.data(), pvData.arrayData(), pvData.arrayBytes());
     }
-
-    // bind image texture
-    switch (_imginfo.width % 8) {
-        case 0:
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 8);
-            break;
-        case 4:
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-            break;
-        case 2:
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 2);
-            break;
-        default:
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-            break;
-    }
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _imginfo.width, _imginfo.height,
-                 0, _imginfo.format, _imginfo.type, img ? img : pvData.arrayData());
-    updateGL();
-
-    // free decoded bayer image
-    if (img)
-        free(img);
+    _imginfo.updated.storeRelaxed(true);
+    update();
 }
 
 
@@ -246,18 +220,20 @@ void ADViewer :: resizeGL(int w, int h)
     _rectView.setLeft(x); _rectView.setWidth(width);
     _rectView.setTop(y); _rectView.setHeight(height);
 
-    glViewport(x, y, width, height);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
 }
 
 void ADViewer :: paintGL()
 {
     glClear (GL_COLOR_BUFFER_BIT);
-    glEnable(GL_TEXTURE_2D);
+    glViewport(_rectView.left() * devicePixelRatio(), _rectView.top() * devicePixelRatio(),
+               _rectView.width() * devicePixelRatio(), _rectView.height() * devicePixelRatio() );
+
     // compile single textured quad
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, _tex);
+    if (_imginfo.updated.testAndSetRelaxed(true, false)) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _imginfo.width, _imginfo.height, 0, _imginfo.format, _imginfo.type, _img.data());
+    }
     glBegin(GL_QUADS);
         glTexCoord2f(_rect.left(), _rect.bottom());    glVertex2f(-1.0, -1.0);
         glTexCoord2f(_rect.right(), _rect.bottom());    glVertex2f( 1.0, -1.0);
@@ -265,8 +241,13 @@ void ADViewer :: paintGL()
         glTexCoord2f(_rect.left(), _rect.top());    glVertex2f(-1.0,  1.0);
     glEnd();
     glDisable(GL_TEXTURE_2D);
-    renderText(-0.95, -0.95, 0, QString("Frame Rate: %1").arg(_imagerate));
-    renderText(0.55, -0.95, 0, QString("x:%1 y:%2").arg(_xp).arg(_yp));
+
+    // Render text
+    QPainter painter(this);
+    painter.setPen(Qt::white);
+    painter.drawText(_rectView.left() + 5, _rectView.bottom() - 20, QString("Frame Rate: %1").arg(pvArrayRate.value().toInt() ? _imagerate : 0));
+    painter.drawText(_rectView.right() - 100, _rectView.bottom() - 20, QString("x:%1 y:%2").arg(_xp).arg(_yp));
+    painter.end();
 }
 
 void ADViewer :: keyReleaseEvent(QKeyEvent *ke)
@@ -295,7 +276,7 @@ void ADViewer :: keyReleaseEvent(QKeyEvent *ke)
     case Qt::Key_Z:
         _rect.setRect(0, 0, 1.0, 1.0);
     }
-    updateGL();
+    update();
 }
 
 void  ADViewer :: zoom(double factor, const QPointF point)
@@ -320,19 +301,19 @@ QPointF ADViewer :: mapToGL(const QPointF point) const
 
 void ADViewer :: wheelEvent(QWheelEvent *we)
 {
-    if (we->delta() > 0)
-        zoom(0.9, mapToGL(we->pos()));
+    if (we->angleDelta().y() > 0)
+        zoom(0.9, mapToGL(we->position()));
     else
-        zoom(1.1, mapToGL(we->pos()));
+        zoom(1.1, mapToGL(we->position()));
 
-    updateGL();
+    update();
     we->accept();
 }
 
 void ADViewer ::mouseDoubleClickEvent(QMouseEvent *)
 {
     _rect.setRect(0, 0, 1.0, 1.0);
-    updateGL();
+    update();
 }
 
 void ADViewer :: mousePressEvent(QMouseEvent *me)
@@ -352,7 +333,7 @@ void ADViewer :: mouseMoveEvent(QMouseEvent* me)
         _xp =  _imginfo.width * pt.x();
         _yp =  _imginfo.height * pt.y();
     }
-    updateGL();
+    update();
 }
 
 void ADViewer :: mouseReleaseEvent(QMouseEvent*)

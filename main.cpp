@@ -1,6 +1,7 @@
 #include <QApplication>
 #include <QImage>
-#include <QDesktopWidget>
+#include <QRegularExpression>
+#include <QScreen>
 #include <QStyle>
 
 #include <QtDebug>
@@ -64,26 +65,27 @@ int main(int argc,  char **argv)
            Qt::LeftToRight,
            Qt::AlignCenter,
            QSize(600, 600),
-           qApp->desktop()->availableGeometry());
+           qApp->primaryScreen()->availableGeometry());
 
-    QRegExp argRate("--rate=([0-9]{1,})");
-    QRegExp argPrefix("--prefix=(.*)");
-    QRegExp argSimple("--simple");
-    QRegExp argFullscreen("--fullscreen");
-    QRegExp argGeometry("--dg=(.*)");
-    QRegExp argHelp("--help");
+    QRegularExpression argRate("--rate=([0-9]{1,})");
+    QRegularExpression argPrefix("--prefix=(.*)");
+    QRegularExpression argSimple("--simple");
+    QRegularExpression argFullscreen("--fullscreen");
+    QRegularExpression argGeometry("--dg=(.*)");
+    QRegularExpression argHelp("--help");
 
+    QRegularExpressionMatch m;
     foreach(QString arg, args) {
-        if (argRate.indexIn(arg) != -1) {
-            image_rate = argRate.cap(1).toInt();
-        } else if (argPrefix.indexIn(arg) != -1) {
-            prefix = argPrefix.cap(1);
-        } else if (argSimple.indexIn(arg) != -1) {
+        if (arg.indexOf(argRate, 0, &m) != -1) {
+            image_rate = m.captured(1).toInt();
+        } else if (arg.indexOf(argPrefix, 0, &m) != -1) {
+            prefix = m.captured(1);
+        } else if (arg.indexOf(argSimple) != -1) {
             simple = true;
-        } else if (argFullscreen.indexIn(arg) != -1) {
+        } else if (arg.indexOf(argFullscreen) != -1) {
             fullscreen = true;
-        } else if (argGeometry.indexIn(arg) != -1) {
-            QStringList geom = parseGeometry(argGeometry.cap(1));
+        } else if (arg.indexOf(argGeometry, 0, &m) != -1) {
+            QStringList geom = parseGeometry(m.captured(1));
             if (!geom[2].isEmpty())
                 geometry.setWidth(geom[2].toInt());
             if (!geom[3].isEmpty())
@@ -93,17 +95,17 @@ int main(int argc,  char **argv)
                 int x = geom[0].toInt();
                 // negative x means distance from the right border
                 if (x < 0)
-                    x = qApp->desktop()->screenGeometry().width() + x - geometry.width();
+                    x = qApp->primaryScreen()->availableGeometry().width() + x - geometry.width();
                 geometry.moveLeft(x);
             }
             if (!geom[1].isEmpty()) {
                 int y = geom[1].toInt();
                 // negative y means distance from the bottom border
                 if (y < 0)
-                    y = qApp->desktop()->screenGeometry().height() + y - geometry.height();
+                    y = qApp->primaryScreen()->availableGeometry().height() + y - geometry.height();
                 geometry.moveTop(y);
             }
-        } else if (argHelp.indexIn(arg) != -1) {
+        } else if (arg.indexOf(argHelp) != -1) {
             qDebug() << "Usage: QtAD [options]\n"
                 << "  --prefix=<areaDetector NDArray>: channel prefix of NDStdArray\n"
                 << "  --rate=<frame rate>: refresh with fixed frame rate\n"

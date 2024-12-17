@@ -1,9 +1,9 @@
 TEMPLATE = app
-QT += core gui opengl
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+QT += core gui widgets
+greaterThan(QT_MAJOR_VERSION, 5): QT += openglwidgets
 MOC_DIR = .moc
 OBJECTS_DIR = .obj
-VERSION = 1.3.0
+VERSION = 2.0.0
 
 QMAKE_CFLAGS += -std=c99
 

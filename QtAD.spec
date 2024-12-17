@@ -1,5 +1,5 @@
 Name: QtAD
-Version: 1.0.0	
+Version: 2.0.0	
 Release: 1%{?dist}
 Summary: areaDetector Viewer in Qt/OpenGL
 
@@ -9,8 +9,8 @@ URL: https://github.com/paulscherrerinstitute/QtAD
 Source0: https://github.com/paulscherrerinstitute/QtAD/archive/%{version}/%{name}-%{version}.tar.gz
 
 
-BuildRequires: qt-devel
-Requires: qt
+BuildRequires: qt5-devel
+Requires: qt5-qtbase-gui
 
 %description
 areaDetector Viewer in Qt/OpenGL
@@ -21,7 +21,7 @@ areaDetector Viewer in Qt/OpenGL
 
 
 %build
-qmake-qt4 PREFIX=%{buildroot}/%{_bindir}
+qmake-qt5 PREFIX=%{buildroot}/%{_bindir}
 make %{?_smp_mflags}
 
 

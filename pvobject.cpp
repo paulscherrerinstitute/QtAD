@@ -232,7 +232,7 @@ void PvObject::getCallback(struct event_handler_args args)
             ConvertSTS(val->tshrtval)
             ConvertTime(val->tshrtval)
             for(unsigned long i=0; i<count; i++)
-                value = (*(dbr_string_t_ptr)(&(val->tstrval.value) + i));
+                value = QString(*(dbr_string_t_ptr)(&(val->tstrval.value) + i));
             break;
         case DBR_TIME_INT:
             ConvertSTS(val->tshrtval)
