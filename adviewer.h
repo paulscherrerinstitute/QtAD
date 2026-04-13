@@ -11,6 +11,7 @@ typedef struct {
     int height; 
     int color;
     int bayer;
+    QString codec;
     GLenum type; 
     GLenum format; 
     unsigned int size;
@@ -73,6 +74,7 @@ private:
     PvObject pvSize2; 
     PvObject pvColor; 
     PvObject pvBayer;
+    PvObject pvCodec;
     PvObject pvUniqueId; 
     PvObject pvArrayRate;
 

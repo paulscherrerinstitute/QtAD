@@ -51,6 +51,7 @@ void ADViewer :: connectChannels()
     pvSize2.setChannel(_prefix + "ArraySize2_RBV"); pvSize2.init();
     pvColor.setChannel(_prefix + "ColorMode_RBV");  pvColor.init();
     pvBayer.setChannel(_prefix + "BayerPattern_RBV");  pvBayer.init();
+    pvCodec.setChannel(_prefix + "Codec_RBV");  pvCodec.init();
     pvUniqueId.setChannel(_prefix + "UniqueId_RBV");  pvUniqueId.init();
     pvArrayRate.setChannel(_prefix + "ArrayRate_RBV");  pvArrayRate.init();
     if (pvData.ensureConnection() != ECA_NORMAL)
@@ -106,6 +107,7 @@ ImgInfo ADViewer :: getImageInfo()
     imginfo.size   = width * height * depth;
     imginfo.color  = pvColor.value().toInt();
     imginfo.bayer  = pvBayer.value().toInt();
+    imginfo.codec  = pvCodec.value().toString();
 
     return imginfo;
 }
@@ -114,7 +116,7 @@ void ADViewer :: setMonitor(bool monitor)
 {
     if (monitor) {
         ImgInfo imginfo = getImageInfo();
-        pvData.monitor(imginfo.size);
+        pvData.monitor(0);
     } else
         pvData.unmonitor();
 }
@@ -135,17 +137,8 @@ void ADViewer :: updateImage()
     if (_imginfo.width *  _rectView.height() != _rectView.width() * _imginfo.height)
         resizeGL(this->width(), this->height());
 
-    if (pvData.monitored()) {
-        // Update monitor if image size changed and wait for next update
-        if (_imginfo.size != pvData.arraySize()) {
-            qDebug() << "update image monitor size " << pvData.arraySize() << "->" <<  _imginfo.size;
-            setMonitor(false);
-            Sleep(500);
-            setMonitor(true);
-            return;
-        }
-    } else
-        pvData.get(_imginfo.size);
+    if (!pvData.monitored())
+        pvData.get(0);
     // update frame rate every 5 frames
     frame_counter += 1;
     if (frame_counter == 5) {
@@ -155,27 +148,48 @@ void ADViewer :: updateImage()
         prev = now;
         frame_counter = 0;
     }
+    // decode compressed image
+    QImage img;
+    void *data = pvData.arrayData();
+    unsigned int dataBytes = pvData.arrayBytes();
+
+    if (_imginfo.codec == "jpeg") {
+        pvData.lock();
+        img = QImage::fromData((const uchar*)pvData.arrayData(), pvData.arrayBytes());
+        pvData.unlock();
+        if (img.isNull()) {
+            qWarning() << "Failed to decode JPEG image";
+            return;
+        }
+        if (_imginfo.color > 1)
+            img.convertTo(QImage::Format_RGB888);
+        data = img.bits();
+        dataBytes = img.sizeInBytes();
+    } else if (!_imginfo.codec.isEmpty()) {
+        qWarning() << "Unsupported codec: " << _imginfo.codec;
+        return;
+    }
 
     // decode bayer image
     if (_imginfo.color == 1) {
         if (_imginfo.type == GL_UNSIGNED_BYTE) {
             _img.resize(_imginfo.width * _imginfo.height * 3);
-            dc1394error_t err = dc1394_bayer_decoding_8bit((uint8_t*)pvData.arrayData(), (uint8_t*)_img.data(),
+            dc1394error_t err = dc1394_bayer_decoding_8bit((uint8_t*)data, (uint8_t*)_img.data(),
                     _imginfo.width, _imginfo.height, (dc1394color_filter_t)(_imginfo.bayer + DC1394_COLOR_FILTER_MIN),
                     DC1394_BAYER_METHOD_NEAREST);
             if (err == DC1394_SUCCESS)
                 _imginfo.format = GL_RGB;
         } else if (_imginfo.type == GL_UNSIGNED_SHORT) {
             _img.resize(_imginfo.width * _imginfo.height * sizeof(uint16_t) * 3);
-            dc1394error_t err = dc1394_bayer_decoding_16bit((uint16_t*)pvData.arrayData(), (uint16_t*)_img.data(),
+            dc1394error_t err = dc1394_bayer_decoding_16bit((uint16_t*)data, (uint16_t*)_img.data(),
                     _imginfo.width, _imginfo.height, (dc1394color_filter_t)(_imginfo.bayer + DC1394_COLOR_FILTER_MIN),
                     DC1394_BAYER_METHOD_NEAREST, 12);
             if (err == DC1394_SUCCESS)
                 _imginfo.format = GL_RGB;
         }
     } else {
-        _img.resize(pvData.arrayBytes());
-        memcpy(_img.data(), pvData.arrayData(), pvData.arrayBytes());
+        _img.resize(dataBytes);
+        memcpy(_img.data(), data, dataBytes);
     }
     _imginfo.updated.storeRelaxed(true);
     update();
