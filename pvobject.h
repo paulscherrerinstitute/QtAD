@@ -73,6 +73,8 @@ public:
     long disconnect();
     long ensureConnection();
 
+    void lock() { epicsMutexLock(_mutex); }
+    void unlock() { epicsMutexUnlock(_mutex); }
 
     long monitor(unsigned long);
     long unmonitor();
